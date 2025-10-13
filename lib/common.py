@@ -461,7 +461,7 @@ def run_all_detections(
         run_path = str(PurePosixPath(full_path).with_suffix(""))
 
         try:
-            dbutils.notebook.run(run_path, arguments={
+            dbutils.notebook.run(run_path,3600,arguments={
                 "earliest": earliest,
                 "latest": latest
             })

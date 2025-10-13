@@ -1,11 +1,11 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # Beta - User Behavior Analysis Generator
-# MAGIC 
+# MAGIC
 # MAGIC This notebook generates a new investigative notebook focused on the behavior of 
 # MAGIC a specific user across multiple security detections. The new notebook will be
 # MAGIC stored in the same folder as this notebook, and can be run to analyze the user's behavior.
-# MAGIC 
+# MAGIC
 # MAGIC **Parameters:**
 # MAGIC - `user_email`: Email address of the user to analyze
 # MAGIC - `time_range_days`: Number of days to look back (default: 30)
@@ -45,6 +45,7 @@ from databricks.sdk.service.workspace import ImportFormat, Language
 import io
 w = WorkspaceClient()
 cwd = os.getcwd().replace("/base/notebooks", "")
+
 # COMMAND ----------
 
 # MAGIC %md
@@ -54,7 +55,10 @@ cwd = os.getcwd().replace("/base/notebooks", "")
 
 def parse_detection_file(file_path: str) -> Dict[str, Any]:
     """Parse a detection file to extract metadata and function information"""
-    with w.workspace.download(os.path.join(cwd, file_path)) as f:
+    #workspace_dir = os.getcwd() + "/../detections"
+    file_path = re.sub(r'\.py$', '', file_path)
+    print(f"Parsing detection file: {file_path}")
+    with w.workspace.download(file_path) as f:
         content = f.read().decode()
     # Extract the YAML metadata from the markdown cell
     yaml_match = re.search(r'```yaml\s*(.*?)```', content, re.DOTALL)
@@ -131,16 +135,20 @@ def parse_detection_file(file_path: str) -> Dict[str, Any]:
         "metadata": metadata
     }
 
-def discover_detections(base_path: str = "base/detections") -> Dict[str, Dict]:
+def discover_detections(base_path: str = "/../detections/") -> Dict[str, Dict]:
     """Dynamically discover all detection files and parse their metadata"""
     
     detections = {}
-    detection_files = glob.glob(os.path.join(cwd, base_path, "*"))
+    workspace_dir = os.getcwd() + "/../detections"
+    path = os.path.join(workspace_dir, "*")
+    print(f"Looking for detection files in {path}")
+    detection_files = [os.path.abspath(os.path.realpath(f)) for f in glob.glob(path)]
     
-    print(f"Discovering detections in {base_path}...")
+    print(f"Discovering detections in {path}...")
     print(f"Found {len(detection_files)} detection files")
-    
+    print(f"detection_files: {detection_files}")
     for file_path in detection_files:
+        print(f"Loading detection file: {file_path}")    
         detection_info = parse_detection_file(file_path)
         if detection_info:
             detection_name = detection_info["file_name"]
@@ -478,6 +486,7 @@ print("Discovering available detections...")
 all_detections = discover_detections()
 
 print(f"\nTotal detections available: {len(all_detections)}")
+
 
 # COMMAND ----------
 
