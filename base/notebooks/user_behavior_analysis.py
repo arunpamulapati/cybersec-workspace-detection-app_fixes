@@ -259,7 +259,7 @@ def generate_user_notebook(user_email: str, time_range_days: int = 30, all_detec
 
 {command}
 
-{magic} %run ./lib/common
+{magic} %run ../lib/common
 
 {command}
 
